@@ -1,33 +1,40 @@
+import "server-only";
+
 import { db } from "~/server/db";
 import { files_table, folders_table } from "~/server/db/schema";
 import { eq } from "drizzle-orm";
 
-export async function getAllParentsForFolder(folderId: number) {
-  const parents = [];
-  let currentId: number | null = folderId;
-  while (currentId !== null) {
-    const folder = await db
-      .selectDistinct()
-      .from(folders_table)
-      .where(eq(folders_table.id, currentId));
-    if (!folder[0]) {
-      throw new Error("Parent folder not found");
+export const QUERIES = {
+  getAllParentsForFolder: async function (folderId: number) {
+    const parents = [];
+    let currentId: number | null = folderId;
+    while (currentId !== null) {
+      const folder = await db
+        .selectDistinct()
+        .from(folders_table)
+        .where(eq(folders_table.id, currentId));
+      if (!folder[0]) {
+        throw new Error("Parent folder not found");
+      }
+
+      parents.unshift(folder[0]);
+      currentId = folder[0]?.parent;
     }
 
-    parents.unshift(folder[0]);
-    currentId = folder[0]?.parent;
-  }
+    return parents;
+  },
 
-  return parents;
-}
-
-//this is async even if we remove the async because it returns a promise
-export async function getFolders(folderId: number) {
-  return db
-    .select()
-    .from(folders_table)
-    .where(eq(folders_table.parent, folderId));
-}
-export async function getFiles(folderId: number) {
-  return db.select().from(files_table).where(eq(files_table.parent, folderId));
-}
+  //this is async, even if we remove the async it still be async because it returns a promise
+  getFolders: async function (folderId: number) {
+    return db
+      .select()
+      .from(folders_table)
+      .where(eq(folders_table.parent, folderId));
+  },
+  getFiles: async function (folderId: number) {
+    return db
+      .select()
+      .from(files_table)
+      .where(eq(files_table.parent, folderId));
+  },
+};
