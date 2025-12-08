@@ -17,7 +17,6 @@ export const QUERIES = {
       .orderBy(foldersSchema.id);
   },
 
-  //test
   getFiles: function (folderId: number) {
     return db
       .select()
